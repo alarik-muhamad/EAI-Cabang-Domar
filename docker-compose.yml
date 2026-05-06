@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+
+  # ─── MySQL auth-service ───────────────────────────────
+  mysql-auth:
+    image: mysql:8.0
+    container_name: mysql-auth
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_auth_data:/var/lib/mysql
+
+  # ─── MySQL inventory-service ──────────────────────────
+  mysql-inventory:
+    image: mysql:8.0
+    container_name: mysql-inventory
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: inventory_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_inventory_data:/var/lib/mysql
+
+  # ─── MySQL accounting-service ─────────────────────────
+  mysql-accounting:
+    image: mysql:8.0
+    container_name: mysql-accounting
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: accounting_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_accounting_data:/var/lib/mysql
+
+  # ─── Zookeeper (required by Kafka) ───────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # ─── Kafka ───────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+
+  # ─── RabbitMQ ────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  mysql_auth_data:
+  mysql_inventory_data:
+  mysql_accounting_data:
+  rabbitmq_data:
