@@ -1,47 +1,33 @@
-package com.example.inventory_service.config;
+package com.example.accounting_service.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 @EnableKafka
-public class KafkaConfig {
+public class KafkaConsumerConfig {
 
-    @Bean public NewTopic stockUpdated() {
-        return TopicBuilder.name("stock.updated").partitions(3).replicas(1).build();
-    }
-    @Bean public NewTopic transferRequested() {
-        return TopicBuilder.name("stock.transfer.requested").partitions(3).replicas(1).build();
-    }
-    @Bean public NewTopic transferApproved() {
-        return TopicBuilder.name("stock.transfer.approved").partitions(3).replicas(1).build();
-    }
-    @Bean public NewTopic lowStockAlert() {
-        return TopicBuilder.name("low.stock.alert").partitions(1).replicas(1).build();
-    }
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "inventory-group");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "accounting-group");
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
         config.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "*");
         config.put(JacksonJsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        config.put(JacksonJsonDeserializer.VALUE_DEFAULT_TYPE, 
-                "com.example.inventory_service.event.TransferEvent");
+        config.put(JacksonJsonDeserializer.VALUE_DEFAULT_TYPE,
+                "com.example.accounting_service.event.TransferEvent");
         return new DefaultKafkaConsumerFactory<>(config);
     }
 

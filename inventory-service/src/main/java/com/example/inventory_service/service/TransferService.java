@@ -1,5 +1,12 @@
 package com.example.inventory_service.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.inventory_service.dto.TransferRequestDto;
 import com.example.inventory_service.entity.StockMovement;
 import com.example.inventory_service.entity.TransferRequest;
@@ -9,12 +16,6 @@ import com.example.inventory_service.rabbitmq.RabbitMQProducer;
 import com.example.inventory_service.repository.ProductRepository;
 import com.example.inventory_service.repository.StockRepository;
 import com.example.inventory_service.repository.TransferRequestRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class TransferService {
@@ -93,7 +94,7 @@ public class TransferService {
                 saved.getQuantity(), "APPROVED");
 
         kafkaProducer.sendTransferApproved(event);
-        rabbitMQProducer.sendTransferDoneNotif(event);
+        // rabbitMQ dipindah ke executeApprovedTransfer setelah transfer benar-benar selesai
 
         return saved;
     }
@@ -122,6 +123,13 @@ public class TransferService {
         transfer.setStatus(TransferRequest.TransferStatus.COMPLETED);
         transfer.setUpdatedAt(LocalDateTime.now());
         transferRepository.save(transfer);
+
+        // Kirim notif ke accounting setelah transfer benar-benar COMPLETED
+        TransferEvent doneEvent = new TransferEvent(
+                transfer.getReferenceNumber(), transfer.getProduct().getId(),
+                transfer.getFromBranchId(), transfer.getToBranchId(),
+                transfer.getQuantity(), "COMPLETED");
+        rabbitMQProducer.sendTransferDoneNotif(doneEvent);
     }
 
     @Transactional
