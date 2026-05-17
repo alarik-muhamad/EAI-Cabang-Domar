@@ -31,4 +31,8 @@ public class InventoryKafkaProducer {
     public void sendLowStockAlert(LowStockEvent event) {
         kafkaTemplate.send("low.stock.alert", String.valueOf(event.getBranchId()), event);
     }
+
+    public void sendTransferCompensated(TransferEvent event) {
+        kafkaTemplate.send("stock.transfer.compensated", event.getReferenceNumber(), event);
+    }
 }
